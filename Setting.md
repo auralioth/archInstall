@@ -1,4 +1,4 @@
-# WM(Hyprland)的安装配置
+# 桌面环境的安装配置
 
 <!--toc:start-->
 
