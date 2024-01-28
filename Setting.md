@@ -1,14 +1,15 @@
-# 桌面环境的安装配置
+# 安装后工作
 
 <!--toc:start-->
 
-- [WM(Hyprland)的安装配置](#wmhyprland的安装配置)
+- [安装后工作](#安装后工作)
   - [1.确保系统为最新](#1确保系统为最新)
   - [2.准备非 root 用户](#2准备非-root-用户)
   - [3.开启 32 位支持库](#3开启-32-位支持库)
   - [4.设置 DNS](#4设置-dns)
-  - [5.Hyprland 前置](#5hyprland-前置)
-  - [6.配置文件恢复](#6配置文件恢复)
+  - [5.网络管理](#5网络管理)
+  - [6.软件源](#6软件源)
+  - [7.配置文件恢复](#7配置文件恢复)
   <!--toc:end-->
 
 官方文档: [安装后的工作](https://wiki.archlinux.org/index.php/General_recommendations)
@@ -78,7 +79,7 @@ nameserver 2001:4860:4860::8844
 sudo chattr +i /etc/resolv.conf
 ```
 
-## 5.Hyprland 前置
+## 5.网络管理
 
 首先进行网络配置
 
@@ -89,6 +90,8 @@ sudo systemctl disable --now iwd                                            # �
 sudo systemctl enable --now NetworkManager
 nmtui                                                                       # 图形化网络配置
 ```
+
+## 6.软件源
 
 添加[archlinuxcn 源](https://www.archlinuxcn.org/archlinux-cn-repo-and-mirror/)
 
@@ -111,6 +114,6 @@ sudo pacman-key --init
 sudo pacman-key --populate
 ```
 
-## 6.配置文件恢复
+## 7.配置文件恢复
 
 参考我的[dotfile](https://github.com/auryouth/archdot)
