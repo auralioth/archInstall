@@ -116,4 +116,4 @@ sudo pacman-key --populate
 
 ## 7.配置文件恢复
 
-参考我的[dotfile](https://github.com/auryouth/archdot)
+参考我的[dotfile](https://github.com/auryouth/archdot/tree/Hyprland)
