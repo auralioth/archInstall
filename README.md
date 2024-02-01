@@ -76,7 +76,7 @@
 
 ```bash
 # rmmod pcspkr
-# echo “blacklist pcspkr” > /etc/modprobe.d/nobeep.conf
+# echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
 ```
 
 ## GRUB
