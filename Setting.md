@@ -3,37 +3,58 @@
 <!--toc:start-->
 
 - [安装后工作](#安装后工作)
-  - [1.确保系统为最新](#1确保系统为最新)
-  - [2.准备非 root 用户](#2准备非-root-用户)
-  - [3.开启 32 位支持库](#3开启-32-位支持库)
-  - [4.设置 DNS](#4设置-dns)
-  - [5.网络管理](#5网络管理)
-  - [6.软件源](#6软件源)
-  - [7.配置文件恢复](#7配置文件恢复)
+  - [1.进入系统](#1进入系统)
+  - [2.确保系统为最新](#2确保系统为最新)
+  - [3.准备非 root 用户](#3准备非-root-用户)
+  - [4.开启 32 位支持库](#4开启-32-位支持库)
+  - [5.设置 DNS](#5设置-dns)
+  - [6.网络管理](#6网络管理)
+  - [7.软件源](#7软件源)
+  - [8.配置文件恢复](#8配置文件恢复)
   <!--toc:end-->
 
 官方文档: [安装后的工作](https://wiki.archlinux.org/index.php/General_recommendations)
 
-## 1.确保系统为最新
+## 1.进入系统
 
-确认网络连接，然后更新系统。
+连接网络
 
 ```bash
-pacman -Syu    # 升级系统中全部包
+systemctl start dhcpcd  # 立即启动dhcp
+# 若为无线连接则还需要启动iwd
+systemctl start iwd     # 立即启动iwd
+```
+
+如果是`arch`和`windows`双系统，那么还需要做一些工作来使得`grub`可以探测到`windows`磁盘
+
+```bash
+sudo pacman -Syu os-prober ntfs-3g  # os-prober用来探测，ntfs-3g识别windows的磁盘
+```
+
+启用 os-prober:默认禁用掉了，将 `GRUB_DISABLE_OS_PROBER=false` 前的注释符#去掉。
+
+```bash
+sudo nvim /etc/default/grub
+```
+
+生成 GRUB 所需的配置文件
+
+```bash
+grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ## 2.准备非 root 用户
 
-添加用户，比如新增加的用户叫 wx
+添加用户，比如新增加的用户叫 ausosa
 
 ```bash
-useradd -m -G wheel -s /bin/bash wx  # wheel附加组可sudo，以root用户执行命令 -m同时创建用户家目录
+useradd -m -G wheel -s /bin/bash ausosa  # wheel附加组可sudo，以root用户执行命令 -m同时创建用户家目录
 ```
 
-设置新用户 wx 的密码
+设置新用户 ausosa 的密码
 
 ```bash
-passwd wx
+passwd ausosa
 ```
 
 编辑 sudoers 配置文件
@@ -73,25 +94,13 @@ nameserver 8.8.4.4
 nameserver 2001:4860:4860::8844
 ```
 
-如果路由器可以自动处理 DNS,resolvconf 会在每次网络连接时用路由器的设置覆盖本机/etc/resolv.conf 中的设置，执行如下命令加入不可变标志，使其不能覆盖如上加入的配置。
+加入不可变标志防止被覆盖
 
 ```bash
 sudo chattr +i /etc/resolv.conf
 ```
 
-## 5.网络管理
-
-首先进行网络配置
-
-```bash
-sudo pacman -S networkmanager
-
-sudo systemctl disable --now iwd                                            # 立即关闭iwd,其无线连接会与NetworkManager冲突
-sudo systemctl enable --now NetworkManager
-nmtui                                                                       # 图形化网络配置
-```
-
-## 6.软件源
+## 7.软件源
 
 添加[archlinuxcn 源](https://www.archlinuxcn.org/archlinux-cn-repo-and-mirror/)
 
@@ -114,6 +123,6 @@ sudo pacman-key --init
 sudo pacman-key --populate
 ```
 
-## 7.配置文件恢复
+## 8.配置文件恢复
 
 参考我的[dotfile](https://github.com/auryouth/archdot/tree/Hyprland)

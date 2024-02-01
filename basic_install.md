@@ -23,12 +23,15 @@
   - [15.安装微码](#15安装微码)
   - [16.安装引导程序](#16安装引导程序)
   - [17.完成安装](#17完成安装)
-  - [18.进入系统](#18进入系统)
   <!--toc:end-->
 
-先安装最基础的无图形化 ArchLinux 系统。详见[官方安装指南](https://wiki.archlinux.org/index.php/Installation_guide)
+[!IMPORTANT]
+[官方安装指南](https://wiki.archlinux.org/index.php/Installation_guide)
 
-开始安装之前可以参考[安装前的准备](https://archlinuxstudio.github.io/ArchLinuxTutorial/#/rookie/archlinux_pre_install)，做好准备工作
+[双启动](https://wiki.archlinux.org/title/Dual_boot_with_Windows)
+
+- 禁用`Secure Boot`
+- 建议禁用`Windows`的快速启动和休眠
 
 ## 0.禁用 reflector
 
@@ -61,7 +64,7 @@ station wlan0 connect YOUR-WIRELESS-NAME        # 进行连接 输入密码即�
 exit                                            # 成功后exit退出
 
 # 测试网络的操作
-ping www.gnu.org
+ping www.baidu.com
 ```
 
 ---
@@ -96,10 +99,9 @@ timedatectl status          # 检查服务状态
 
 这是一个在我个人电脑上实行的方案。此步骤会清除磁盘中全部内容
 
-- /boot EFI 分区：800MB（由电脑厂商或 Windows 决定，无需再次创建）
+- /efi EFI 分区：800MB（由电脑厂商或 Windows 决定）
 - Swap 分区：电脑实际运行内存(16G)（设置这个大小是为了配置休眠准备）
-- / 根目录：剩下所有（和用户主目录在同一个 Btrfs 文件系统上）
-- /home 用户主目录：剩下所有（和根目录在同一个 Btrfs 文件系统上）
+- / 根目录：剩下所有 ( Btrfs 文件系统上）
 
 将磁盘转换为 `gpt` 类型，假设磁盘名称为 `sda`。如果使用 `NVME` 的固态硬盘，你看到的磁盘名称可能为 `nvme0n1`。
 
@@ -114,7 +116,7 @@ quit                        # 最后quit退出parted命令行交互
 
 使用 cfdisk 命令对磁盘分区。
 
-一般建议将 EFI 分区设置为磁盘的第一个分区，其中 EFI 分区选择`EFI System`类型，Swap分区选择`Linux Swap`类型，其余两个分区选择`Linux filesystem`类型。
+一般建议将 EFI 分区设置为磁盘的第一个分区，其中 EFI 分区选择`EFI System`类型，Swap分区选择`Linux Swap`类型，根目录选择`Linux filesystem`类型。
 
 **分区之后选择`write`写入磁盘再退出。**
 
@@ -201,7 +203,7 @@ mount --mkdir /dev/sdax -o subvol=@var_cache /mnt/var/cache
 mount --mkdir /dev/sdax -o subvol=@var_log /mnt/var/log
 mount --mkdir /dev/sdax -o subvol=@docker /mnt/var/lib/docker
 
-mount --mkdir /dev/sdax /mnt/boot
+mount --mkdir /dev/sdax /mnt/efi
 
 swapon /dev/sdxn
 ```
@@ -376,40 +378,106 @@ reboot              # 重启
 
 `注意：`重启前要先拔掉 U 盘，否则重启后还是进安装程序而不是安装好的系统。
 
+官方文档: [安装后的工作](https://wiki.archlinux.org/index.php/General_recommendations)
+
 ## 18.进入系统
 
 连接网络
 
 ```bash
 systemctl start dhcpcd  # 立即启动dhcp
-ping www.gnu.org        # 测试网络连接
-```
-
-若为无线连接，则还需要启动 `iwd` 才可以使用 `iwctl` 连接网络
-
-```bash
+# 若为无线连接则还需要启动iwd
 systemctl start iwd     # 立即启动iwd
-iwctl                   # 和之前的方式一样，连接无线网络
 ```
 
-如果你是`archlinux`单系统，那么到此为止，一个基础的，无 UI 界面的 Arch Linux 已经安装完成了。
+`arch`和`windows` 双系统
 
-如果你是`arch`和`windows`双系统，那么还需要做一些工作来使得`grub`可以探测到`windows`磁盘
-
-```bash
-sudo pacman -S os-prober ntfs-3g  # os-prober用来探测，ntfs-3g识别windows的磁盘
-```
-
-启用 os-prober:默认禁用掉了，将 GRUB_DISABLE_OS_PROBER=false 前的注释符#去掉。
-
-```bash
-sudo nvim /etc/default/grub
-```
-
-生成 GRUB 所需的配置文件
-
-```bash
+````bash
+sudo pacman -Syu os-prober ntfs-3g  # os-prober用来探测，ntfs-3g识别windows的磁盘
+/etc/default/grub 中uncomment `GRUB_DISABLE_OS_PROBER=false`以启用os-prober
 grub-mkconfig -o /boot/grub/grub.cfg
+
+
+## 2.准备非 root 用户
+
+添加用户，比如新增加的用户叫 ausosa
+
+```bash
+useradd -m -G wheel -s /bin/bash ausosa  # wheel附加组可sudo，以root用户执行命令 -m同时创建用户家目录
+````
+
+设置新用户 ausosa 的密码
+
+```bash
+passwd ausosa
 ```
 
-重新启动即可进入到接下来的[图形界面](<https://github.com/auryouth/archdoc/blob/master/WM(Hyprland)%26Setting.md>)安装配置。
+编辑 sudoers 配置文件
+
+```bash
+EDITOR=nvim visudo  # 需要以 root 用户运行 visudo 命令
+```
+
+找到下面这样的一行，把前面的注释符号 `#` 去掉，`:wq` 保存并退出即可。
+
+```sudoers
+#%wheel ALL=(ALL:ALL) ALL
+```
+
+## 3.开启 32 位支持库
+
+```bash
+nvim /etc/pacman.conf
+```
+
+去掉[multilib]一节中两行的注释，来开启 32 位库支持。
+
+最后:wq 保存退出，刷新 pacman 数据库
+
+```bash
+pacman -Syu
+```
+
+## 4.设置 DNS
+
+nvim 编辑/etc/resolv.conf，删除已有条目，并将如下内容加入其中
+
+```bash
+nameserver 8.8.8.8
+nameserver 2001:4860:4860::8888
+nameserver 8.8.4.4
+nameserver 2001:4860:4860::8844
+```
+
+加入不可变标志防止被覆盖
+
+```bash
+sudo chattr +i /etc/resolv.conf
+```
+
+## 7.软件源
+
+添加[archlinuxcn 源](https://www.archlinuxcn.org/archlinux-cn-repo-and-mirror/)
+
+```bash
+
+# 在 /etc/pacman.conf 文件末尾添加以下两行
+[archlinuxcn]
+Server = https://repo.archlinuxcn.org/$arch
+
+# 安装keyring
+sudo pacman -Syu
+sudo pacman -S archlinuxcn-keyring
+```
+
+注意添加后安装 archlinuxcn-keyring 报错的话执行下列命令再安装
+
+```bash
+sudo rm -rf /etc/pacman.d/gnupg
+sudo pacman-key --init
+sudo pacman-key --populate
+```
+
+## 8.配置文件恢复
+
+参考我的[dotfile](https://github.com/auryouth/archdot/tree/Hyprland)
