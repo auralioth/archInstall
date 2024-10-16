@@ -11,7 +11,6 @@
 ## 分区
 
 - /efi EFI 分区：800MB
-- Swap 分区：电脑实际运行内存(16G)
 - / 根目录：剩下所有 (Btrfs 文件系统）
 
 ## 分完区格式化后创建子卷
@@ -62,8 +61,6 @@
 # mount --mkdir /dev/sdax -o subvol=@docker /mnt/var/lib/docker
 
 # mount --mkdir /dev/sdax /mnt/efi
-
-# swapon /dev/sdxn
 ```
 
 ## fstab
